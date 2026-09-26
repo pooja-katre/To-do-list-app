@@ -1,34 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo List</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+let input = document.getElementById('todo-input');
+let addBtn = document.getElementById('add-btn');
+let list = document.getElementById('todo-list');
 
-  <div class="container my-5">
-    <div class="card shadow">
-      <div class="card-body">
-        <h1 class="text-center text-primary mb-4">Simple Todo List</h1>
+let saved = localStorage.getItem('todos');
+let todos = saved ? JSON.parse(saved) : [];
 
-        <!-- Input and button -->
-        <div class="input-group mb-3">
-          <input type="text" id="todo-input" class="form-control" placeholder="Enter a todo and press Add or Enter">
-          <button id="add-btn" class="btn btn-success">Add</button>
-        </div>
+function saveTodos() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+}
 
-        <!-- Todo List -->
-        <ul id="todo-list" class="list-group"></ul>
-      </div>
-    </div>
-  </div>
+function createTodoNode(todo, index) {
+    let li = document.createElement('li');
+    li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
 
-  <!-- Bootstrap JS (optional for components) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Your JS file -->
-  <script src="script.js"></script>
-</body>
-</html>
+    // Checkbox
+    let checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !!todo.completed;
+    checkbox.classList.add("form-check-input", "me-2");
+
+    checkbox.addEventListener("change", function() {
+        todo.completed = checkbox.checked;
+        textSpan.style.textDecoration = todo.completed ? 'line-through' : 'none';
+        saveTodos();
+
+        
+        console.log("Todo status:", todo.completed);
+    });
+
+    // Text
+    let textSpan = document.createElement("span");
+    textSpan.textContent = todo.text;
+    textSpan.style.margin = '0 8px';
+    if (todo.completed) {
+        textSpan.style.textDecoration = 'line-through';
+    }
+
+    // Double-click → Edit
+    textSpan.addEventListener("dblclick", function() {
+        let newText = prompt("Edit todo", todo.text);
+        if (newText !== null) {
+            todo.text = newText.trim();
+            textSpan.textContent = todo.text;
+            saveTodos();
+        }
+    });
+
+    // Delete Button
+    let delBtn = document.createElement('button');
+    delBtn.textContent = "Delete";
+    delBtn.classList.add("btn", "btn-danger", "btn-sm");
+    delBtn.addEventListener('click', function() {
+        todos.splice(index, 1);
+        render();
+        saveTodos();
+
+    
+        console.log("Todo deleted:", true);
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(textSpan);
+    li.appendChild(delBtn);
+    return li;
+}
+
+function render() {
+    list.innerHTML = '';
+    todos.forEach(function(todo, index) {
+        let node = createTodoNode(todo, index);
+        list.appendChild(node);
+    });
+}
+
+function addTodo() {
+    let text = input.value.trim();
+    if (!text) return;
+
+    todos.push({ text: text, completed: false });
+    input.value = '';
+    render();
+    saveTodos();
+
+    
+    console.log("Todo added:", true);
+}
+
+addBtn.addEventListener("click", addTodo);
+
+input.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        addTodo();
+    }
+});
+
+render();
